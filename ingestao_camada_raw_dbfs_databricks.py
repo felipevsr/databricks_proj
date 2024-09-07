@@ -22,7 +22,6 @@ try:
   valor_maximo_raw.sort()
   valor_maximo_raw = valor_maximo_raw[-1]
   print("Ultima pagina inserida na RAw ==>  " ,valor_maximo_raw)
-  noticias = []
   contador = valor_maximo_raw
   if valor_maximo_raw < content_json["totalPages"]:
 
@@ -47,7 +46,6 @@ try:
 except Exception as e:
   print("Nao possui arquivos")
   print("Buscando noticias dese a pagina 1")
-  noticias = []
   contador = 1
   while contador <= content_json["totalPages"]:
      noticias_API = requests.get(f"http://servicodados.ibge.gov.br/api/v3/noticias/?page={contador}")
