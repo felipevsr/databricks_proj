@@ -1,4 +1,4 @@
-PROJETO  SIMULANDO ARQUITETURA MEDALHÃO - (BONZE-SILVER-GOLD)
+PROJETO  SIMULANDO ARQUITETURA MEDALHÃO - (BRONZE-SILVER-GOLD)
 EATAPAS:
 
   1 -(RAW) Ingestão de dados consumidos da API IBGE Notícias utilizando a biblioteca requests (método GET).
