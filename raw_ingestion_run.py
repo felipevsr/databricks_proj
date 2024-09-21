@@ -109,6 +109,6 @@ class RawLayerIngestion:
 
 
 
-### API IBGE de noticias, iniciando da pagina 1,  diretório de armazenamento
+### API IBGE de noticias, iniciando da pagina 1,  diretório de armazenamento ###
 ingestao_raw = RawLayerIngestion('http://servicodados.ibge.gov.br/api/v3/noticias/',1,'dbfs:/mnt/raw_3/')
 ingestao_raw.start_run()
