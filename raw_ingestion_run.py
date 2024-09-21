@@ -9,7 +9,6 @@ from pyspark.sql.functions import *
 import requests
 import json
 
-
 class RawLayerIngestion:
   
   def __init__(self,url,first_page,raw_directory):
@@ -20,7 +19,7 @@ class RawLayerIngestion:
   def raw_ingestion(self):
 
     try:
-      valor_maximo_raw = [int(i.name.split('_')[1].replace("/","")) for i in dbutils.fs.ls(self.raw_directory)]
+      valor_maximo_raw =[int(i.name.split('_')[-1].replace("/","") ) for i in dbutils.fs.ls(self.raw_directory)]
       valor_maximo_raw.sort()
       valor_maximo_raw = valor_maximo_raw[-1]
       ## Verificando numero total de paginas ##
@@ -28,31 +27,35 @@ class RawLayerIngestion:
       content_json = content_json.json()
       print("Ultima pagina inserida na RAw ==>  " ,valor_maximo_raw)
       acumulo_paginas = []
+      np_acumulo = []
       contador = valor_maximo_raw
-      if valor_maximo_raw < content_json["totalPages"]:
+      if valor_maximo_raw <= content_json["totalPages"]:
 
         print(f"Iniciando Proceeso a partit da pagina ==> {contador}")
         while contador <= content_json["totalPages"]:
           noticias_API = requests.get("{url}?page={contador}".format(url=self.URL_API,contador=contador))
           noticias_json = noticias_API.json()
           acumulo_paginas.append(noticias_json["items"])
+          np_acumulo.append(noticias_json['page'])
 
           if noticias_json["items"] != [] and str(noticias_json["page"])[-1] == "0":
 
             result_acumulo_paginas =[acumulo_paginas[i][item] for i in range(0,len(acumulo_paginas))
                                                                 for item in range(0,len(acumulo_paginas[i]))]   
-            df = spark.createDataFrame(result_acumulo_paginas).withColumn(f'to_the_page',lit(contador))
+            df = spark.createDataFrame(result_acumulo_paginas).withColumn(f'PAGE',lit(f"{np_acumulo[0]} - to - {np_acumulo[-1]}"))
             print(f"\t Gravando até a pagina {contador}  no diretorio dbfs {self.raw_directory}")
-            df.write.mode("overwrite").json(f'{self.raw_directory}filetothepage_{contador}')
+            df.write.mode("overwrite").json(f'{self.raw_directory}ibgeapipage_{np_acumulo[0]}_to_{np_acumulo[-1]}')
             acumulo_paginas = []
+            np_acumulo = []
           elif  noticias_json["page"] == content_json["totalPages"]:
             ### Ajuntando todas as paginas appendadas em uma lista unica ####
             result_acumulo_paginas =[acumulo_paginas[i][item] for i in range(0,len(acumulo_paginas))
                                                                     for item in range(0,len(acumulo_paginas[i]))]  
-            df = spark.createDataFrame(result_acumulo_paginas).withColumn(f'to_the_page',lit(contador))
+            df = spark.createDataFrame(result_acumulo_paginas).withColumn(f'PAGE',lit(f"{np_acumulo[0]} - to - {np_acumulo[-1]}"))
             print(f"\t Gravando a pagina {contador}  no diretorio dbfs {self.raw_directory}")
-            df.write.mode("overwrite").json(f'{self.raw_directory}filetothepage_{contador}')
+            df.write.mode("overwrite").json(f'{self.raw_directory}ibgeapipage_{np_acumulo[0]}_to_{np_acumulo[-1]}')
             acumulo_paginas = []
+            np_acumulo = []
 
           contador = contador +1
         print("Processo finalizado")
@@ -66,30 +69,34 @@ class RawLayerIngestion:
         noticias_API = requests.get("{url}?page={page}".format(url=self.URL_API,page=self.first_page))
         noticias_json = noticias_API.json()
         acumulo_paginas = []
+        np_acumulo = []
         contador = 1
         while contador <= noticias_json["totalPages"]:
           noticias_API = requests.get("{url}?page={contador}".format(url=self.URL_API,contador=contador))
           noticias_json = noticias_API.json()
           acumulo_paginas.append(noticias_json["items"])
+          np_acumulo.append(noticias_json['page'])
 
           if noticias_json["items"] != [] and str(noticias_json["page"])[-1] == "0":
 
             result_acumulo_paginas =[acumulo_paginas[i][item] for i in range(0,len(acumulo_paginas))
                                                                 for item in range(0,len(acumulo_paginas[i]))]   
             
-            df = spark.createDataFrame(result_acumulo_paginas).withColumn(f'to_the_page',lit(contador))
+            df = spark.createDataFrame(result_acumulo_paginas).withColumn(f'PAGE',lit(f"{np_acumulo[0]} - to - {np_acumulo[-1]}"))
             print(f"\t Gravando até a pagina {contador}  no diretorio dbfs {self.raw_directory}")
-            df.write.mode("overwrite").json(f'{self.raw_directory}filetothepage_{contador}')
+            df.write.mode("overwrite").json(f'{self.raw_directory}ibgeapipage_{np_acumulo[0]}_to_{np_acumulo[-1]}')
             acumulo_paginas = []
+            np_acumulo = []
           elif noticias_json["page"] == noticias_json["totalPages"]:
             print(f"Gravando todas as paginas até {contador}  no diretorio dbfs {self.raw_directory}")
             ### Ajuntando todas as paginas appendadas em uma lista unica ####
             result_acumulo_paginas =[acumulo_paginas[i][item] for i in range(0,len(acumulo_paginas))
                                                                   for item in range(0,len(acumulo_paginas[i]))]  
             
-            df = spark.createDataFrame(result_acumulo_paginas).withColumn(f'to_the_page',lit(contador))
-            df.write.mode("overwrite").json(f'{self.raw_directory}filetothepage_{contador}')
+            df = spark.createDataFrame(result_acumulo_paginas).withColumn(f'PAGE',lit(f"{np_acumulo[0]} - to - {np_acumulo[-1]}"))
+            df.write.mode("overwrite").json(f'{self.raw_directory}ibgeapipage_{np_acumulo[0]}_to_{np_acumulo[-1]}')
             acumulo_paginas = []
+            np_acumulo = []
           contador = contador +1
         print("Processo finalizado")
       except Exception as e:
@@ -98,6 +105,9 @@ class RawLayerIngestion:
   def start_run(self):
     self.raw_ingestion()
   
+
+
+
 
 ### API IBGE de noticias, iniciando da pagina 1,  diretório de armazenamento
 ingestao_raw = RawLayerIngestion('http://servicodados.ibge.gov.br/api/v3/noticias/',1,'dbfs:/mnt/raw_3/')
