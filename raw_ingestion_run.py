@@ -47,18 +47,18 @@ class RawLayerIngestion:
 
             result_acumulo_paginas =[acumulo_paginas[i][item] for i in range(0,len(acumulo_paginas))
                                                                 for item in range(0,len(acumulo_paginas[i]))]   
-            df = spark.createDataFrame(result_acumulo_paginas).withColumn(f'PAGE',lit(f"{np_acumulo[0]} - to - {np_acumulo[-1]}"))
+            df = spark.createDataFrame(result_acumulo_paginas).withColumn(f'PAGE',lit(f"{np_acumulo[0]} - to - {np_acumulo[-1]} - {time_file}"))
             print(f"\t Gravando até a pagina {contador}  no diretorio dbfs {self.raw_directory}")
-            df.write.mode("overwrite").json(f'{self.raw_directory}ibgeapipage_{np_acumulo[0]}_to_{np_acumulo[-1]}')
+            df.write.mode("overwrite").json(f'{self.raw_directory}ibgeapipage_{np_acumulo[0]}_to_{np_acumulo[-1]}_{time_file}')
             acumulo_paginas = []
             np_acumulo = []
           elif  noticias_json["page"] == content_json["totalPages"]:
             ### Ajuntando todas as paginas appendadas em uma lista unica ####
             result_acumulo_paginas =[acumulo_paginas[i][item] for i in range(0,len(acumulo_paginas))
                                                                     for item in range(0,len(acumulo_paginas[i]))]  
-            df = spark.createDataFrame(result_acumulo_paginas).withColumn(f'PAGE',lit(f"{np_acumulo[0]} - to - {np_acumulo[-1]}"))
+            df = spark.createDataFrame(result_acumulo_paginas).withColumn(f'PAGE',lit(f"{np_acumulo[0]} - to - {np_acumulo[-1]} - {time_file}"))
             print(f"\t Gravando a pagina {contador}  no diretorio dbfs {self.raw_directory}")
-            df.write.mode("overwrite").json(f'{self.raw_directory}ibgeapipage_{np_acumulo[0]}_to_{np_acumulo[-1]}')
+            df.write.mode("overwrite").json(f'{self.raw_directory}ibgeapipage_{np_acumulo[0]}_to_{np_acumulo[-1]}_{time_file}')
             acumulo_paginas = []
             np_acumulo = []
 
