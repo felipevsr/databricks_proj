@@ -1,10 +1,11 @@
 from delta.tables import *
 from pyspark.sql.types import *
 from pyspark.sql.functions import col
-import datetime, pytz
+import pytz
 from pyspark.sql.functions import lit
 from pyspark.sql import Window
 from pyspark.sql.functions import *
+from datetime import datetime
 
 import requests
 import json
@@ -37,6 +38,10 @@ class RawLayerIngestion:
           noticias_json = noticias_API.json()
           acumulo_paginas.append(noticias_json["items"])
           np_acumulo.append(noticias_json['page'])
+          ##### Data e hora de ingestao na camada RAW   ####
+          timezone_sp = pytz.timezone('America/Sao_Paulo')
+          current_time = datetime.now(timezone_sp)
+          time_file = datetime.strftime(current_time,'%Y%m%d_%H%M%S')
 
           if noticias_json["items"] != [] and str(noticias_json["page"])[-1] == "0":
 
@@ -76,15 +81,19 @@ class RawLayerIngestion:
           noticias_json = noticias_API.json()
           acumulo_paginas.append(noticias_json["items"])
           np_acumulo.append(noticias_json['page'])
+          ##### Data e hora de ingestao na camada RAW   ####
+          timezone_sp = pytz.timezone('America/Sao_Paulo')
+          current_time = datetime.now(timezone_sp)
+          time_file = datetime.strftime(current_time,'%Y%m%d_%H%M%S')
 
           if noticias_json["items"] != [] and str(noticias_json["page"])[-1] == "0":
 
             result_acumulo_paginas =[acumulo_paginas[i][item] for i in range(0,len(acumulo_paginas))
                                                                 for item in range(0,len(acumulo_paginas[i]))]   
             
-            df = spark.createDataFrame(result_acumulo_paginas).withColumn(f'PAGE',lit(f"{np_acumulo[0]} - to - {np_acumulo[-1]}"))
+            df = spark.createDataFrame(result_acumulo_paginas).withColumn(f'PAGE',lit(f"{np_acumulo[0]} - to - {np_acumulo[-1]} - {time_file}"))
             print(f"\t Gravando até a pagina {contador}  no diretorio dbfs {self.raw_directory}")
-            df.write.mode("overwrite").json(f'{self.raw_directory}ibgeapipage_{np_acumulo[0]}_to_{np_acumulo[-1]}')
+            df.write.mode("overwrite").json(f'{self.raw_directory}ibgeapipage_{np_acumulo[0]}_to_{np_acumulo[-1]}_{time_file}')
             acumulo_paginas = []
             np_acumulo = []
           elif noticias_json["page"] == noticias_json["totalPages"]:
@@ -93,8 +102,8 @@ class RawLayerIngestion:
             result_acumulo_paginas =[acumulo_paginas[i][item] for i in range(0,len(acumulo_paginas))
                                                                   for item in range(0,len(acumulo_paginas[i]))]  
             
-            df = spark.createDataFrame(result_acumulo_paginas).withColumn(f'PAGE',lit(f"{np_acumulo[0]} - to - {np_acumulo[-1]}"))
-            df.write.mode("overwrite").json(f'{self.raw_directory}ibgeapipage_{np_acumulo[0]}_to_{np_acumulo[-1]}')
+            df = spark.createDataFrame(result_acumulo_paginas).withColumn(f'PAGE',lit(f"{np_acumulo[0]} - to - {np_acumulo[-1]} - {time_file}"))
+            df.write.mode("overwrite").json(f'{self.raw_directory}ibgeapipage_{np_acumulo[0]}_to_{np_acumulo[-1]}_{time_file}')
             acumulo_paginas = []
             np_acumulo = []
           contador = contador +1
