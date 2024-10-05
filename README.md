@@ -6,4 +6,4 @@ ETAPAS:
       A partir da segunda execução, é feita uma verificação para identificar qual foi a última página inserida na camada RAW, e, a partir dessa página, 
       a ingestão continua a partir da última página já inserida.
 
-   2 - (BRONZE)   
+   2 - (BRONZE)  Site do IBGE onde esta a API IBGE estava fora do ar dia  05/10/2024.... aguardando normalizaçção... para seguir com atividade camada bronze.....
