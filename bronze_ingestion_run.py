@@ -43,13 +43,34 @@ except Exception as e:
 
 
 
+### Listando arquivos camada RAW
+def list_all_files(path_files):
 
-files = []
-for i in range(0,11):
-  files.append(dbutils.fs.ls('dbfs:/mnt/raw/')[i].path)
+  all_files = []
+  for files in dbutils.fs.ls(path_files):
+    all_files.append([files.path,files.path.split("_")[-1].replace("/","")])
+  all_files.sort(key = lambda pos:pos[1])
+  # print(all_files)
+  return [all_files[i][0] for i in range(0,len(all_files))]
 
-### é Possivel fazer a Leitura de varios arquivos de forma Multipla, passando a referencia deles dentro de uma lista  ##########
+### Separando Arquivos de 10 em 10  ####
 
-spark.read.json(files).display()
+def separate_files():
+  # separate_files = []
+  all_files = list_all_files(source_system_path)
+  return  [ all_files[i:i+10] for i in range(0,len(all_files),10)]
 
-#### CONTINUAR APOS NORMALIZAÇÂO DA API IBGE NOTICIAS  ########
+
+# Gravando Arquivo na Tabela Bronze (delta Table)(
+def save_files_delta():
+  files_to_record = separate_files()
+  for files in files_to_record:
+    # print(files,len(files),"\n")
+    df =spark.read.json(files)
+    #### Adicionando data de ingestao ####
+    df = df.withColumn('DTPROC',lit(datetime.now(pytz.timezone('America/Sao_Paulo')).strftime('%Y%m%d_%H%M%S')))
+    print(f"salvando tabela bronze no caminho ===> {bronze_delta_path}  com o nome ===>  {delta_table} ")
+    df.write.mode('append').format('delta').save(bronze_delta_path)
+
+
+############# CONTINUAR  AJUSTES  ###########   (adicionar criação de tabela no hive_metastore try except e criar CLASSE)
