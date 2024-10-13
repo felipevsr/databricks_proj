@@ -9,6 +9,6 @@ ETAPAS:
    2 - (BRONZE) 
      Ingestão de dados da API Noticias no formato JSON na camada Bronze. Dados salvos no formato Delta (escrita append) e tabela criada no catalogo databricks.
      Nome tabela: bronze.ibge_news.
+     ![image](https://github.com/user-attachments/assets/64a8b91b-b847-4581-8f05-5c594e0185eb)
 
-     ![image](https://github.com/user-attachments/assets/0505e64d-83f3-4336-9cdb-5efbfefb0505)
      
