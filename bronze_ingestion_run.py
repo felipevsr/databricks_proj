@@ -67,11 +67,12 @@ class BronzeIngestion:
     except Exception as error:
       print(f"{error}") 
 
-  ### Separando arquivos a cada 10 items ou a quantidade que for..
-  ### caso seja menor do que 10
+
+  
   def separate_files(self):
     try:
-
+      ### Separando arquivos a cada 10 items ou a quantidade que for..
+      ### caso seja menor do que 10
       all_files = self.list_all_files()
       return  [ all_files[i:i+10] for i in range(0,len(all_files),10)]
     
@@ -81,31 +82,31 @@ class BronzeIngestion:
   ### Salvando Dados na camada Bronze ###
   def save_files_delta(self):
     try:
-      
+      print(" Inicinado método list_all_files().... \n Inicinado método list_all_files() .... \n Inicinado método save_files_delta() ....\n")
       files_to_record = self.separate_files()
       for files in files_to_record:
         # print(files,len(files),"\n")
         df =spark.read.json(files)
         #### Adicionando data de ingestao ####
         df = df.withColumn('DTPROC',lit(datetime.now(pytz.timezone('America/Sao_Paulo')).strftime('%Y%m%d_%H%M%S')))
-        print(f"salvando tabela bronze no caminho ===> {bronze_delta_path}  com o nome ===>  {delta_table} ")
-        df.write.mode('append').format('delta').save(bronze_delta_path)
-
+        print(f" Salvando dados da API no caminho ===> {self.bronze_delta_path}  com o nome ===>  {self.delta_table} ")
+        df.write.mode('append').format('delta').save(self.bronze_delta_path)
+      print("\n Dados salvos em formato delta. \n")
     except Exception as error:
       print(f"{error}")
 
   ### Criando tabela no hive_metastore (catalogo Databricks)  ####
   def create_delta_table_hive(self):
     try:
-      sql = """ CREATE DATABASE IF NOT EXISTS bronze """
+      sql = f""" CREATE DATABASE IF NOT EXISTS {self.db} """
       spark.sql(sql)
       print(sql,"\n")
 
-      sql_drop = f""" DROP TABLE IF EXISTS {delta_table}  """
+      sql_drop = f""" DROP TABLE IF EXISTS {self.delta_table}  """
       spark.sql(sql_drop)
       print(sql_drop,"\n") 
 
-      sql_table = f""" CREATE TABLE IF NOT EXISTS {delta_table} USING DELTA LOCATION '{bronze_delta_path}' """
+      sql_table = f""" CREATE TABLE IF NOT EXISTS {self.delta_table} USING DELTA LOCATION '{self.bronze_delta_path}' """
       spark.sql(sql_table)
       print(sql_table)
 
@@ -117,8 +118,13 @@ class BronzeIngestion:
   #### Executando  ####
   def bronze_run(self):
     print("Inicio do processo de ingestão na bronze... \n")
+    ### Nao é preciso chamar os dois metodos comentados..pois o método save_files_delta ...
+    ### está chamando os dois metodos qdo é executado.
+
+    ### save_files_delta() chama ==> separate_files() chama ==> list_all_files()
+    
     # self.list_all_files()
-    self.separate_files()
+    # self.separate_files()
     self.save_files_delta()
     self.create_delta_table_hive()
     print("Processo finalizado!..")
