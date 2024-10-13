@@ -29,7 +29,7 @@ try:
   source_system_path = 'dbfs:/mnt/raw_3/'
 
   ### caminho para gravação do histórico ###
-  historic_path = 'dbfs:/mnt/historic/'
+  historic_path = 'dbfs:/mnt/historic/bronze/'
   
   print("##----------------------------##")
   print(f"Data e Horário de execusão             ===> {time_file} \n")
@@ -95,6 +95,16 @@ class BronzeIngestion:
     except Exception as error:
       print(f"{error}")
 
+  ##### Copiando arquivos para Historico  ####
+  def copy_to_historic(self):
+    try:
+      print(f"\n Copiando arquivos de ==> {self.source_system_path} para ==>  {self.historic_path} \n ")
+      dbutils.fs.cp(self.source_system_path,self.historic_path,recurse = True)
+      print(" Copia realizada com sucesso.\n")
+    except Exception as error:
+      print(f"{error}")
+  
+  
   ### Criando tabela no hive_metastore (catalogo Databricks)  ####
   def create_delta_table_hive(self):
     try:
@@ -113,22 +123,17 @@ class BronzeIngestion:
     except Exception as error:
       print(f"{error}")
 
-  ##### Movendo arquivos para Historico  ####
+  
 
   #### Executando  ####
   def bronze_run(self):
     print("Inicio do processo de ingestão na bronze... \n")
-    ### Nao é preciso chamar os dois metodos comentados..pois o método save_files_delta ...
-    ### está chamando os dois metodos qdo é executado.
-
-    ### save_files_delta() chama ==> separate_files() chama ==> list_all_files()
-    
     # self.list_all_files()
     # self.separate_files()
     self.save_files_delta()
+    self.copy_to_historic()
     self.create_delta_table_hive()
     print("Processo finalizado!..")
-    
     
     
 ############################################################
@@ -136,4 +141,4 @@ bronze = BronzeIngestion('bronze','ibge_news','dbfs:/mnt/bronze/','dbfs:/mnt/raw
 bronze.bronze_run()
 
 
-#### Finalizar  move historic   e alguns ajustes mais   ######
+#### Ajustar copy to historic para verifiar apenas arquivos novos  ######
