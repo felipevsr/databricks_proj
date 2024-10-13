@@ -6,4 +6,6 @@ ETAPAS:
       A partir da segunda execução, é feita uma verificação para identificar qual foi a última página inserida na camada RAW, e, a partir dessa página, 
       a ingestão continua a partir da última página já inserida.
 
-   2 - (BRONZE)  Finalaizar ajustes ingestão Camada Bronze.... 12/10/2024
+   2 - (BRONZE) ![image](https://github.com/user-attachments/assets/0505e64d-83f3-4336-9cdb-5efbfefb0505)
+     Ingestão de dados da API Noticias no formato JSON na camada Bronze. Dados salvos no formato Delta (escrita append) e tabela criada no catalogo databricks.
+     Nome tabela: bronze.ibge_news
