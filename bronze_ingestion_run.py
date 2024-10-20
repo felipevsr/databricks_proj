@@ -56,16 +56,40 @@ class BronzeIngestion:
   ### Listando arquivos camada RAW   ####
   def list_all_files(self):
     try:
-      ### self.source_system_path => sistema de origem   ####
-      all_files = []
-      for files in dbutils.fs.ls(self.source_system_path):
-        all_files.append([files.path,files.path.split("_")[-1].replace("/","")])
-      all_files.sort(key = lambda pos:pos[1])
-      # print(all_files)
-      return [all_files[i][0] for i in range(0,len(all_files))]
+      #### Faz a comparação entre Raw e histórico caso ja existam arquivos no Historico  ####
+      ################################################################################
+      
+      #### Lista de arquivos da Raw ####
+      lst_folder_date = [lst_date.name.replace('/','') for lst_date in dbutils.fs.ls(f'{self.source_system_path}') if lst_date.name.replace('/','').isnumeric() ]
+      lst_folder_date.sort()
+      raw_set = {files.path.split('/')[-2] for files in dbutils.fs.ls(f'{self.source_system_path}{lst_folder_date[-1]}/')} 
+      ### Lista de arquivos Historico   ####
+      lst_folder_date_historic = [lst_date.name.replace('/','') for lst_date in dbutils.fs.ls(f'{self.historic_path}') if lst_date.name.replace('/','').isnumeric()  ]
+      lst_folder_date_historic.sort()
+      historic_set = {files.path.split('/')[-2]  for files in dbutils.fs.ls(f'{self.historic_path}{lst_folder_date_historic[-1]}/')}
 
-    except Exception as error:
-      print(f"{error}") 
+      all_files = [f'{self.source_system_path}{lst_folder_date[-1]}/{files}'  for files in list(raw_set.symmetric_difference(historic_set))]
+      print(f'Número de arquivos para ingestão == > {len(all_files)}')
+      return all_files
+
+    except:
+      try:
+        #### Caso naõa existm arquivos no histórico é listado todos arquivos na Raw ####
+        ################################################################################
+        ## Verifica a pasta data mais recente ###
+        lst_folder_date = [lst_date.name.replace('/','') for lst_date in dbutils.fs.ls(f'{self.source_system_path}')]
+        lst_folder_date.sort()
+        ### self.source_system_path => sistema de origem   ####
+        all_files = []
+        for files in dbutils.fs.ls(f'{self.source_system_path}{lst_folder_date[-1]}/'):
+          all_files.append([files.path,files.path.split("_")[-1].replace("/","")])
+        all_files.sort(key = lambda pos:pos[1])
+        # print(all_files)
+        all_files_found = [all_files[i][0] for i in range(0,len(all_files))]
+        print(f'Número de arquivos para ingestão == > {len(all_files_found)}')
+        return all_files_found
+      except Exception as error:
+        print(f"{error}")       
 
 
   
@@ -98,8 +122,11 @@ class BronzeIngestion:
   ##### Copiando arquivos para Historico  ####
   def copy_to_historic(self):
     try:
-      print(f"\n Copiando arquivos de ==> {self.source_system_path} para ==>  {self.historic_path} \n ")
-      dbutils.fs.cp(self.source_system_path,self.historic_path,recurse = True)
+      ## Verifica a pasta data mais recente ###
+      lst_folder_date = [lst_date.name.replace('/','') for lst_date in dbutils.fs.ls(f'{self.source_system_path}')]
+      lst_folder_date.sort()
+      print(f"\n Copiando arquivos de ==> {self.source_system_path}{lst_folder_date[-1]}/ para ==>  {self.historic_path}{lst_folder_date[-1]}/ \n ")
+      dbutils.fs.cp(f'{self.source_system_path}{lst_folder_date[-1]}/',f'{self.historic_path}{lst_folder_date[-1]}/',recurse = True)
       print(" Copia realizada com sucesso.\n")
     except Exception as error:
       print(f"{error}")
