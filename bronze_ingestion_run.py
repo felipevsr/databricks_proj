@@ -164,9 +164,7 @@ class BronzeIngestion:
     print("Processo finalizado!..")
     
     
-############################################################
+###########################################################
 bronze = BronzeIngestion('bronze','ibge_news','dbfs:/mnt/bronze/','dbfs:/mnt/raw_3/','dbfs:/mnt/historic/bronze/')
 bronze.bronze_run()
 
-
-#### Ajustar copy to historic para verifiar apenas arquivos novos  ######
