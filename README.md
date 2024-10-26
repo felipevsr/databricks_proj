@@ -11,6 +11,6 @@ ETAPAS:
      Ingestão de dados da API Noticias no formato JSON na camada Bronze. Dados salvos no formato Delta (escrita append) e tabela criada no catalogo databricks.
      Nome tabela: bronze.ibge_news.
 
-     3 - (SILVER)  
-       Na camada Silver iniciaremos o preocesso de limpeza e deduplicação.
+   3 - (SILVER)  
+     Na camada Silver iniciaremos o preocesso de limpeza e deduplicação.
        
