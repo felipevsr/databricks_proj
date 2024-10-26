@@ -122,12 +122,13 @@ class BronzeIngestion:
   ##### Copiando arquivos para Historico  ####
   def copy_to_historic(self):
     try:
-      ## Verifica a pasta data mais recente ###
-      lst_folder_date = [lst_date.name.replace('/','') for lst_date in dbutils.fs.ls(f'{self.source_system_path}')]
-      lst_folder_date.sort()
-      print(f"\n Copiando arquivos de ==> {self.source_system_path}{lst_folder_date[-1]}/ para ==>  {self.historic_path}{lst_folder_date[-1]}/ \n ")
-      dbutils.fs.cp(f'{self.source_system_path}{lst_folder_date[-1]}/',f'{self.historic_path}{lst_folder_date[-1]}/',recurse = True)
-      print(" Copia realizada com sucesso.\n")
+      lista_arquivos = self.list_all_files()
+      for folder in lista_arquivos:
+        name_folder = folder.split('/')[-2]
+        date_folder = folder.split('/')[-3]
+        print(f"Copiando arquivo {self.source_system_path +date_folder+'/'+ name_folder +'/'} para ===> {self.historic_path+date_folder+'/'}")
+        dbutils.fs.cp(self.source_system_path +date_folder+'/'+name_folder +'/',self.historic_path + date_folder +'/'+name_folder +'/',recurse = True)
+
     except Exception as error:
       print(f"{error}")
   

@@ -35,7 +35,7 @@ class RawLayerIngestion:
       contador = valor_maximo_raw
       if valor_maximo_raw <= content_json["totalPages"]:
 
-        print(f"Iniciando Proceeso a partit da pagina ==> {contador}")
+        print(f"Iniciando Processo a partit da pagina ==> {contador}")
         while contador <= content_json["totalPages"]:
           noticias_API = requests.get("{url}?page={contador}".format(url=self.URL_API,contador=contador))
           noticias_json = noticias_API.json()
