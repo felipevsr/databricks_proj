@@ -13,5 +13,5 @@ ETAPAS:
      Nome tabela: bronze.ibge_news.
 
    3 - (SILVER)  
-     Na camada Silver iniciaremos o preocesso de limpeza e deduplicação.
+     Na camada Silver iniciaremos o processo de limpeza e deduplicação.
        
