@@ -1,6 +1,7 @@
 PROJETO  SIMULANDO ARQUITETURA MEDALHÃO - (BRONZE-SILVER-GOLD)
 ETAPAS:
-![image](https://img.freepik.com/vetores-gratis/conjunto-de-medalhas-ilustracao_1284-11496.jpg?t=st=1729952877~exp=1729956477~hmac=982ca57afbecf13aa74c9e47f7a6374d9de07eec45004e93f4d9cb7651524cae&w=1060)
+![image](https://github.com/user-attachments/assets/258aeddb-4b71-476e-9271-e79333705646)
+
 
   1 -(RAW) Ingestão de dados consumidos da API IBGE Notícias (API pública, sem necessidade de token)  utilizando a biblioteca requests (método GET).
       Na primeira execução do código, é realizada a paginação de todos os dados da API até a última página que contenha dados para consumir.
