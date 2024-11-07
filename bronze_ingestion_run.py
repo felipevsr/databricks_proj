@@ -63,12 +63,18 @@ class BronzeIngestion:
       lst_folder_date = [lst_date.name.replace('/','') for lst_date in dbutils.fs.ls(f'{self.source_system_path}') if lst_date.name.replace('/','').isnumeric() ]
       lst_folder_date.sort()
       raw_set = {files.path.split('/')[-2] for files in dbutils.fs.ls(f'{self.source_system_path}{lst_folder_date[-1]}/')} 
-      ### Lista de arquivos Historico   ####
-      lst_folder_date_historic = [lst_date.name.replace('/','') for lst_date in dbutils.fs.ls(f'{self.historic_path}') if lst_date.name.replace('/','').isnumeric()  ]
-      lst_folder_date_historic.sort()
-      historic_set = {files.path.split('/')[-2]  for files in dbutils.fs.ls(f'{self.historic_path}{lst_folder_date_historic[-1]}/')}
 
-      all_files = [f'{self.source_system_path}{lst_folder_date[-1]}/{files}'  for files in list(raw_set.symmetric_difference(historic_set))]
+      ### Lista de arquivos Historico   ####
+      try:
+        historic_set = {files.path.split('/')[-2]  for files in dbutils.fs.ls(f'{self.historic_path}{lst_folder_date[-1]}/')}
+      except:
+        ## Caso nao haja ANO e MES mais recentes no historico.
+        all_files = [f'{self.source_system_path}{lst_folder_date[-1]}/{files}'  for files in list(raw_set)]
+        print(f'Número de arquivos para ingestão == > {len(all_files)}')
+        return all_files
+
+      all_files = [f'{self.source_system_path}{lst_folder_date[-1]}/{files}'  for files in list(historic_set.symmetric_difference(raw_set))]
+      print(all_files)
       print(f'Número de arquivos para ingestão == > {len(all_files)}')
       return all_files
 
@@ -118,20 +124,19 @@ class BronzeIngestion:
       print("\n Dados salvos em formato delta. \n")
     except Exception as error:
       print(f"{error}")
-
+  
   ##### Copiando arquivos para Historico  ####
   def copy_to_historic(self):
     try:
       lista_arquivos = self.list_all_files()
       for folder in lista_arquivos:
-        name_folder = folder.split('/')[-2]
-        date_folder = folder.split('/')[-3]
+        name_folder = folder.split('/')[-1]
+        date_folder = folder.split('/')[-2]
         print(f"Copiando arquivo {self.source_system_path +date_folder+'/'+ name_folder +'/'} para ===> {self.historic_path+date_folder+'/'}")
-        dbutils.fs.cp(self.source_system_path +date_folder+'/'+name_folder +'/',self.historic_path + date_folder +'/'+name_folder +'/',recurse = True)
+        dbutils.fs.cp(self.source_system_path +date_folder+'/'+name_folder,self.historic_path + date_folder +'/'+name_folder +'/',recurse = True)
 
     except Exception as error:
       print(f"{error}")
-  
   
   ### Criando tabela no hive_metastore (catalogo Databricks)  ####
   def create_delta_table_hive(self):
@@ -162,7 +167,6 @@ class BronzeIngestion:
     self.copy_to_historic()
     self.create_delta_table_hive()
     print("Processo finalizado!..")
-    
     
 ###########################################################
 bronze = BronzeIngestion('bronze','ibge_news','dbfs:/mnt/bronze/','dbfs:/mnt/raw_3/','dbfs:/mnt/historic/bronze/')
