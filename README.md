@@ -1,6 +1,7 @@
 PROJETO  SIMULANDO ARQUITETURA MEDALHÃO UTILIZANDO DATABRICKS COMMUNITY - (BRONZE-SILVER-GOLD)
 ETAPAS:
-![image](https://github.com/user-attachments/assets/258aeddb-4b71-476e-9271-e79333705646)
+![image](https://github.com/user-attachments/assets/8632e55c-48ee-499d-b580-c8b5bedc1546)
+
 
 
   1 -(RAW) Ingestão de dados consumidos da API IBGE Notícias (API pública, sem necessidade de token)  utilizando a biblioteca requests (método GET).
