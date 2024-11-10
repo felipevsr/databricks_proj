@@ -45,13 +45,14 @@ except Exception as e:
 
 class BronzeIngestion:
 
-  def __init__(self,db,table,bronze_delta_path,source_system_path,historic_path):
+  def __init__(self,db,table,bronze_delta_path,source_system_path,historic_path,period):
     self.db                 = db
     self.table              = table
     self.delta_table        = f"{self.db}.{self.table}"
     self.bronze_delta_path  = bronze_delta_path
     self.source_system_path = source_system_path
     self.historic_path      = historic_path
+    self.period             = str(period)
 
   ### Listando arquivos camada RAW   ####
   def list_all_files(self):
@@ -60,45 +61,26 @@ class BronzeIngestion:
       ################################################################################
       
       #### Lista de arquivos da Raw ####
-      lst_folder_date = [lst_date.name.replace('/','') for lst_date in dbutils.fs.ls(f'{self.source_system_path}') if lst_date.name.replace('/','').isnumeric() ]
-      lst_folder_date.sort()
-      raw_set = {files.path.split('/')[-2] for files in dbutils.fs.ls(f'{self.source_system_path}{lst_folder_date[-1]}/')} 
+      raw_set = {files.path.split('/')[-2] for files in dbutils.fs.ls(f'{self.source_system_path}{self.period}/')} 
 
       ### Lista de arquivos Historico   ####
       try:
-        historic_set = {files.path.split('/')[-2]  for files in dbutils.fs.ls(f'{self.historic_path}{lst_folder_date[-1]}/')}
+        historic_set = {files.path.split('/')[-2]  for files in dbutils.fs.ls(f'{self.historic_path}{self.period}/')}
       except:
         ## Caso nao haja ANO e MES mais recentes no historico.
-        all_files = [f'{self.source_system_path}{lst_folder_date[-1]}/{files}'  for files in list(raw_set)]
+        all_files = [f'{self.source_system_path}{self.period}/{files}'  for files in list(raw_set)]
         print(f'Número de arquivos para ingestão == > {len(all_files)}')
         return all_files
 
-      all_files = [f'{self.source_system_path}{lst_folder_date[-1]}/{files}'  for files in list(historic_set.symmetric_difference(raw_set))]
+      all_files = [f'{self.source_system_path}{self.period}/{files}'  for files in list(historic_set.symmetric_difference(raw_set))]
       print(all_files)
       print(f'Número de arquivos para ingestão == > {len(all_files)}')
       return all_files
 
-    except:
-      try:
-        #### Caso naõa existm arquivos no histórico é listado todos arquivos na Raw ####
-        ################################################################################
-        ## Verifica a pasta data mais recente ###
-        lst_folder_date = [lst_date.name.replace('/','') for lst_date in dbutils.fs.ls(f'{self.source_system_path}')]
-        lst_folder_date.sort()
-        ### self.source_system_path => sistema de origem   ####
-        all_files = []
-        for files in dbutils.fs.ls(f'{self.source_system_path}{lst_folder_date[-1]}/'):
-          all_files.append([files.path,files.path.split("_")[-1].replace("/","")])
-        all_files.sort(key = lambda pos:pos[1])
-        # print(all_files)
-        all_files_found = [all_files[i][0] for i in range(0,len(all_files))]
-        print(f'Número de arquivos para ingestão == > {len(all_files_found)}')
-        return all_files_found
-      except Exception as error:
-        print(f"{error}")       
+    except Exception as error:
+      print(f"{error}")    
 
-
-  
+ 
   def separate_files(self):
     try:
       ### Separando arquivos a cada 10 items ou a quantidade que for..
