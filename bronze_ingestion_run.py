@@ -151,6 +151,6 @@ class BronzeIngestion:
     print("Processo finalizado!..")
     
 ###########################################################
-bronze = BronzeIngestion('bronze','ibge_news','dbfs:/mnt/bronze/','dbfs:/mnt/raw_3/','dbfs:/mnt/historic/bronze/')
+bronze = BronzeIngestion('bronze','ibge_news','dbfs:/mnt/bronze/','dbfs:/mnt/raw_3/','dbfs:/mnt/historic/bronze/'202411)
 bronze.bronze_run()
 
