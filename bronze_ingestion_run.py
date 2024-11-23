@@ -12,6 +12,17 @@ from datetime import datetime
 import requests
 import json
 
+'''
+Essa configuração permite que o Delta Lake faça automaticamente a evolução do esquema 
+ao detectar mudanças no esquema dos dados durante operações de merge, update ou append, 
+sem a necessidade de redefinir manualmente o esquema.
+'''
+spark.conf.set("spark.databricks.delta.schema.autoMerge.enabled", "true")
+'''
+Essa configuração permite que o Delta Lake faça automaticamente a união de arquivos pequenos 
+durante operações de escrita, reduzindo a fragmentação sem a necessidade de otimizações manuais frequentes
+'''
+spark.conf.set("spark.databricks.delta.autoCompact.enabled", "true")
 
 ############ VARIAVEIS   ############
 try:
