@@ -15,5 +15,6 @@ ETAPAS:
 
    3 - (SILVER)  
      Na camada Silver, criamos a estrutura da tabela Delta, iniciamos o processo de limpeza e deduplicação, e aplicamos filtros por data. Por fim, particionamos e realizamos a escrita da tabela utilizando MERGE (upsert) para inserir e atualizar os dados de forma eficiente.
-  4 - (GOLD) 
+     
+ 4 - (GOLD)   
        
