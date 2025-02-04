@@ -59,7 +59,6 @@ try:
 except Exception as e:
   print(e)
 
-
 class GoldIngestion:
   def __init__(self,source_delta_table,gold_delta_table,gold_delta_path,dtstart,dtend):
     self.source_delta_table = source_delta_table
@@ -129,7 +128,20 @@ class GoldIngestion:
 
       print(f'Tabela {gold_delta_table}  criada com sucesso !!!\n')
 
-  def transform(self):
+  def campos_json(self):
+    try:
+      df_silver = spark.table(f'{self.source_delta_table}') ## Adicionar filtro
+      ### Vericar com antecedencia na tabela silver campos com estrutura json ###
+      list_columns = ['imagens']
+      ### colocar um IF list_columns > 0 e else park.table(f'{self.source_delta_table}') 
+      for column in df_silver.dtypes:
+        if column[0] in list_columns:
+          print(f'Criando estrutura JSON do campo == > {column[0]}')
+          df_silver = df_silver.withColumn(f'{column[0]}_dict',from_json(f'{column[0]}',MapType(StringType(),StringType())))
+      return  df_silver
+    except:
+      print('Não há campos para criar estrutura JSON')
+      return df_silver = spark.table(f'{self.source_delta_table}') ## Adicionar filtro
 
 
 

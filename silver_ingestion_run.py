@@ -228,7 +228,7 @@ class  SilverIngestion:
       df =  spark.createDataFrame(data= [],schema=schema)
       print(f'Criando estrutura da tabela delta no caminho .. {silver_delta_path}')
       df.write.format('delta').partitionBy('dt').save(f'{silver_delta_path}')
-      ####  FOI PRECISO CRIAR A TABELA A CADA EXECUÇÃO ,POIS, O CLUSTER DO DB CIMMUNITY NAO SALVA AS INFORMAÇOES NO META STORE QDO O CLUSTER É DESLIGADO ######
+      ####  FOI PRECISO CRIAR A TABELA A CADA EXECUÇÃO ,POIS, O CLUSTER DO DB COMMUNITY NAO SALVA AS INFORMAÇOES NO META STORE QDO O CLUSTER É DESLIGADO ######
 
       ### Criando Data base  ###
       sql = f""" CREATE DATABASE IF NOT EXISTS {db} """
