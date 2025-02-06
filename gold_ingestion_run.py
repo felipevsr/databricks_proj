@@ -130,35 +130,56 @@ class GoldIngestion:
 
   def campos_json(self):
     try:
+      print('Iniciando ... campos_json')
       df_silver = spark.table(f'{self.source_delta_table}') ## Adicionar filtro
       ### Vericar com antecedencia na tabela silver campos com estrutura json ###
       list_columns = ['imagens']
-      ### colocar um IF list_columns > 0 e else park.table(f'{self.source_delta_table}') 
-      for column in df_silver.dtypes:
-        if column[0] in list_columns:
-          print(f'Criando estrutura JSON do campo == > {column[0]}')
-          df_silver = df_silver.withColumn(f'{column[0]}_dict',from_json(f'{column[0]}',MapType(StringType(),StringType())))
-      return  df_silver
-    except:
-      print('Não há campos para criar estrutura JSON')
-      return df_silver = spark.table(f'{self.source_delta_table}') ## Adicionar filtro
 
+      if len(list_columns) > 0:
+        for column in df_silver.dtypes:
+          if column[0] in list_columns:
+            print(f'Criando estrutura JSON do campo == > {column[0]}')
+            df_silver = df_silver.withColumn(f'{column[0]}_dict',from_json(f'{column[0]}',MapType(StringType(),StringType())))
+            return  df_silver
+      else:
+        df_silver = spark.table(f'{self.source_delta_table}') ## Adicionar filtro
+        return df_silver
+    except Exception as error:
+      raise ValueError(f"{error}")
 
+  def newColumns(self,df):
+    from pyspark.sql.functions import col
+    try:
+      print('Iniciando ... newColumns')
+      all_new_columns = []
+      for column in df.dtypes:
+        if column[1].startswith('map'):
+          print(column[0],column[1])
+          max_columns = df.select(max(map_keys(column[0])) ).collect()[0][0]
+          all_new_columns.extend([col(f'{column[0]}.'+ cols).alias(f'{cols}') for cols in max_columns])
 
-
-
+      return all_new_columns
     
+    except Exception as error:
+      raise ValueError(f"{error}")
+
+  def teste(self,columns):
+     print('Iniciando ... teste')
+     all_new_columns = columns
+     df = self.campos_json()
+     df = df.select('*',*all_new_columns)
+     return df
+     
+  
   def save_gold(self):
     self.create_structured_delta_schema()
+    df = self.campos_json()
+    columns = self.newColumns(df)
+    return self.teste(columns)
+  
+  ## Funciona... Ajustar ordem de chmadas das funçoes
 
 
 
 ###### CONTINUAR #######
 
-df_silver = spark.table("silver.ibge_news")
-df_silver = df_silver.withColumn('images_dict',from_json(df_silver.imagens,MapType(StringType(),StringType())))
-
-# SELECIONANDO O A LINHA COM MAIOR QTDE DE CAMPOS PARA APLICAR TRANSFORMAÇÃO
-max_columns = df_silver.select(max(map_keys(col("images_dict"))) ).collect()[0][0]
-# max_columns = list(max_columns)[0][0]
-max_columns
