@@ -59,6 +59,7 @@ try:
 except Exception as e:
   print(e)
 
+
 class GoldIngestion:
   def __init__(self,source_delta_table,gold_delta_table,gold_delta_path,dtstart,dtend):
     self.source_delta_table = source_delta_table
@@ -129,6 +130,7 @@ class GoldIngestion:
       print(f'Tabela {gold_delta_table}  criada com sucesso !!!\n')
 
   def campos_json(self):
+    ## Tranforma os campos string em campos JSON ##
     try:
       print('Iniciando ... campos_json')
       df_silver = spark.table(f'{self.source_delta_table}') ## Adicionar filtro
@@ -147,8 +149,10 @@ class GoldIngestion:
     except Exception as error:
       raise ValueError(f"{error}")
 
-  def newColumns(self,df):
+  def newColumns(self):
+    ### Identifica os campos Json e faz a separaçao de cada campo individualmente ###
     from pyspark.sql.functions import col
+    df = self.campos_json()
     try:
       print('Iniciando ... newColumns')
       all_new_columns = []
@@ -158,26 +162,43 @@ class GoldIngestion:
           max_columns = df.select(max(map_keys(column[0])) ).collect()[0][0]
           all_new_columns.extend([col(f'{column[0]}.'+ cols).alias(f'{cols}') for cols in max_columns])
 
-      return all_new_columns
+
+      return all_new_columns ,df
     
     except Exception as error:
       raise ValueError(f"{error}")
 
-  def teste(self,columns):
+  def teste(self):
+     all_new_columns,df = self.newColumns()
      print('Iniciando ... teste')
-     all_new_columns = columns
-     df = self.campos_json()
-     df = df.select('*',*all_new_columns)
-     return df
+     df_final = (df.withColumn('dt',lit(f"{self.dt}"))
+                 .select('id'
+                   ,'newsHighlight'
+                   ,'editorials'
+                   ,'images'
+                   ,'publicationDate'
+                   ,'introduction'
+                   ,'link'
+                   ,'product_id'
+                   ,'products'
+                   ,'relatedProducts'
+                   ,'type'
+                   ,'title'
+                   ,'dateIngestion'
+                   ,'dt'
+                   ,*all_new_columns)
+           )
+     return df_final
      
   
   def save_gold(self):
     self.create_structured_delta_schema()
-    df = self.campos_json()
-    columns = self.newColumns(df)
-    return self.teste(columns)
+    return self.teste()
   
-  ## Funciona... Ajustar ordem de chmadas das funçoes
+  # Continurar Ajustes---- 
+  # - Colocar Filtros na tabelas Silver
+  # -- Ajustar método teste
+  # --- colocar Merge
 
 
 
