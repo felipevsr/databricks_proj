@@ -21,10 +21,14 @@ Essa configuração permite que o Delta Lake faça automaticamente a união de a
 durante operações de escrita, reduzindo a fragmentação sem a necessidade de otimizações manuais frequentes
 '''
 spark.conf.set("spark.databricks.delta.autoCompact.enabled", "true")
+'''
+Esse comando abaixo possibilita Time zone de São Paulo
+'''
+spark.conf.set("spark.sql.session.timeZone", "America/Sao_Paulo")
 
 
 try:
-  time_file = datetime.now(pytz.timezone('America/Sao_Paulo')).strftime('%Y%m%d_%H%M%S')
+  time_file = datetime.now(pytz.timezone('America/Sao_Paulo')).strftime('%Y-%m-%dT%H:%M:%S')
   # DeltaTable.isDeltaTable(spark, gold_delta_path)
 
   #### Nome  e caminho onde será feita a escrita da da tabela Delta  ##########
@@ -58,7 +62,6 @@ try:
 
 except Exception as e:
   print(e)
-
 
 class GoldIngestion:
   def __init__(self,source_delta_table,gold_delta_table,gold_delta_path,dtstart,dtend):
@@ -130,10 +133,9 @@ class GoldIngestion:
       print(f'Tabela {gold_delta_table}  criada com sucesso !!!\n')
 
   def campos_json(self):
-    ## Tranforma os campos string em campos JSON ##
     try:
       print('Iniciando ... campos_json')
-      df_silver = spark.table(f'{self.source_delta_table}') ## Adicionar filtro
+      df_silver = spark.table(f'{self.source_delta_table}').filter(substring(col('dateIngestion'),1,10).cast('date').between(f'{self.dtstart}',f'{self.dtend}') )
       ### Vericar com antecedencia na tabela silver campos com estrutura json ###
       list_columns = ['imagens']
 
@@ -144,13 +146,13 @@ class GoldIngestion:
             df_silver = df_silver.withColumn(f'{column[0]}_dict',from_json(f'{column[0]}',MapType(StringType(),StringType())))
             return  df_silver
       else:
-        df_silver = spark.table(f'{self.source_delta_table}') ## Adicionar filtro
+        df_silver = spark.table(f'{self.source_delta_table}').filter(substring(col('dateIngestion'),1,10).cast('date').between(f'{self.dtstart}',f'{self.dtend}') )
         return df_silver
     except Exception as error:
       raise ValueError(f"{error}")
 
   def newColumns(self):
-    ### Identifica os campos Json e faz a separaçao de cada campo individualmente ###
+    ### Faz a separação de todos os campos dentro da do campo Json identificado  ###
     from pyspark.sql.functions import col
     df = self.campos_json()
     try:
@@ -171,23 +173,26 @@ class GoldIngestion:
   def teste(self):
      all_new_columns,df = self.newColumns()
      print('Iniciando ... teste')
+
      df_final = (df.withColumn('dt',lit(f"{self.dt}"))
-                 .select('id'
-                   ,'newsHighlight'
-                   ,'editorials'
-                   ,'images'
-                   ,'publicationDate'
-                   ,'introduction'
-                   ,'link'
-                   ,'product_id'
-                   ,'products'
-                   ,'relatedProducts'
-                   ,'type'
-                   ,'title'
-                   ,'dateIngestion'
-                   ,'dt'
-                   ,*all_new_columns)
-           )
+                   .withColumn('dateIngestion',current_timestamp())
+                   .select('id'
+                            ,'newsHighlight'
+                            ,'editorials'
+                            ,'images'
+                            ,'publicationDate'
+                            ,'introduction'
+                            ,'link'
+                            ,'product_id'
+                            ,'products'
+                            ,'relatedProducts'
+                            ,'type'
+                            ,'title'
+                            ,'dateIngestion'
+                            ,'dt'
+                            ,*all_new_columns
+                         )
+                 )
      return df_final
      
   
@@ -196,10 +201,8 @@ class GoldIngestion:
     return self.teste()
   
   # Continurar Ajustes---- 
-  # - Colocar Filtros na tabelas Silver
   # -- Ajustar método teste
   # --- colocar Merge
-
 
 
 ###### CONTINUAR #######
