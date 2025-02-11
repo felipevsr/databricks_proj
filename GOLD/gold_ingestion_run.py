@@ -37,8 +37,7 @@ try:
   gold_delta_table = f'{db}.{table}'
   gold_delta_path = 'dbfs:/mnt/gold/'
   DT_END = datetime.now().date()
-  DT_START = (DT_END - timedelta(days = 7))
-  # if not DeltaTable.isDeltaTable(spark,gold_delta_path):
+
   #   DT_START = '2020-01-01'
 
   if DeltaTable.isDeltaTable(spark,gold_delta_path):
@@ -75,7 +74,7 @@ class GoldIngestion:
 
   def create_structured_delta_schema(self):
 
-    if not DeltaTable.isDeltaTable(spark,gold_delta_path):
+    if not DeltaTable.isDeltaTable(spark,self.gold_delta_path):
       print('Criando estrutura tabela Delta....\n')
       schema = StructType([
 
@@ -97,47 +96,48 @@ class GoldIngestion:
                             ])
       ### Criando estrutura tabela Delta ###
       df =  spark.createDataFrame(data= [],schema=schema)
-      print(f'Criando estrutura da tabela delta no caminho .. {gold_delta_path}')
-      df.write.format('delta').partitionBy('dt').save(f'{gold_delta_path}')
+      print(f'Criando estrutura da tabela delta no caminho .. {self.gold_delta_path}')
+      df.write.format('delta').partitionBy('dt').save(f'{self.gold_delta_path}')
       
-      print(f'Tabela ===> {gold_delta_table}  ja foi anteriormente criada no caminho ===> {gold_delta_path}')
+      print(f'Tabela ===> {self.gold_delta_table}  ja foi anteriormente criada no caminho ===> {self.gold_delta_path}')
       ### Criando Data base  ###
       sql = f""" CREATE DATABASE IF NOT EXISTS {db} """
       spark.sql(sql)
       ### Criando tabela de metadadados db gold  ###
-      sql =  f""" DROP TABLE IF EXISTS {gold_delta_table}"""
+      sql =  f""" DROP TABLE IF EXISTS {self.gold_delta_table}"""
       spark.sql(sql)
       print(sql)
 
-      sql =  f""" CREATE TABLE IF NOT EXISTS {gold_delta_table} USING DELTA LOCATION '{gold_delta_path}' """
+      sql =  f""" CREATE TABLE IF NOT EXISTS {self.gold_delta_table} USING DELTA LOCATION '{self.gold_delta_path}' """
       spark.sql(sql)
       print(sql,'\n')
 
-      print(f'Tabela {gold_delta_table}  criada com sucesso !!!\n')
+      print(f'Tabela {self.gold_delta_table}  criada com sucesso !!!\n')
       
      
     else:
-      print(f'Tabela ===> {gold_delta_table}  ja foi anteriormente criada no caminho ===> {gold_delta_path}')
+      print(f'Tabela ===> {self.gold_delta_table}  ja foi anteriormente criada no caminho ===> {self.gold_delta_path}')
       ### Criando Data base  ###
       sql = f""" CREATE DATABASE IF NOT EXISTS {db} """
       spark.sql(sql)
       ### Criando tabela de metadadados db gold  ###
-      sql =  f""" DROP TABLE IF EXISTS {gold_delta_table}"""
+      sql =  f""" DROP TABLE IF EXISTS {self.gold_delta_table}"""
       spark.sql(sql)
       print(sql)
 
-      sql =  f""" CREATE TABLE IF NOT EXISTS {gold_delta_table} USING DELTA LOCATION '{gold_delta_path}' """
+      sql =  f""" CREATE TABLE IF NOT EXISTS {self.gold_delta_table} USING DELTA LOCATION '{self.gold_delta_path}' """
       spark.sql(sql)
       print(sql,'\n')
 
-      print(f'Tabela {gold_delta_table}  criada com sucesso !!!\n')
+      print(f'Tabela {self.gold_delta_table}  criada com sucesso !!!\n')
 
   def campos_json(self):
     try:
       print('Iniciando ... campos_json')
       df_silver = spark.table(f'{self.source_delta_table}').filter(substring(col('dateIngestion'),1,10).cast('date').between(f'{self.dtstart}',f'{self.dtend}') )
-      ### Vericar com antecedencia na tabela silver campos com estrutura json ###
+      ### Vericar com antecedencia na tabela silver campos com estrutura json ###(Não ocorre erro caso a lista estiver vazia)
       list_columns = ['imagens']
+      # list_columns = []
 
       if len(list_columns) > 0:
         for column in df_silver.dtypes:
@@ -170,9 +170,8 @@ class GoldIngestion:
     except Exception as error:
       raise ValueError(f"{error}")
 
-  def teste(self):
+  def transform_gold(self):
      all_new_columns,df = self.newColumns()
-     print('Iniciando ... teste')
 
      df_final = (df.withColumn('dt',lit(f"{self.dt}"))
                    .withColumn('dateIngestion',current_timestamp())
@@ -193,17 +192,22 @@ class GoldIngestion:
                             ,*all_new_columns
                          )
                  )
-     return df_final
+
+     print('Inicio gravação tabela delta...\n')
+     (DeltaTable.forPath(spark, self.gold_delta_path).alias("old")
+       .merge(df_final.alias("new"),"old.id = new.id")
+       .whenMatchedUpdateAll()
+       .whenNotMatchedInsertAll()
+       .execute()
+      )
+     print('Gravação finalizada com sucesso!!!')
      
   
   def save_gold(self):
     self.create_structured_delta_schema()
-    return self.teste()
+    return self.transform_gold()
   
-  # Continurar Ajustes---- 
-  # -- Ajustar método teste
-  # --- colocar Merge
+  # Pequenos Ajustes Try exeception no ultimo metodo
 
 
-###### CONTINUAR #######
 
