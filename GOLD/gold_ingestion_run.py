@@ -71,7 +71,7 @@ class GoldIngestion:
     self.dtend = dtend
     self.dt = str(dtend).replace('-','')[0:6]
 
-
+  #### CRIANDO ESTRUTURA BASE DA TABELA DELTA (CAMADA GOLD) ####
   def create_structured_delta_schema(self):
 
     if not DeltaTable.isDeltaTable(spark,self.gold_delta_path):
@@ -131,6 +131,7 @@ class GoldIngestion:
 
       print(f'Tabela {self.gold_delta_table}  criada com sucesso !!!\n')
 
+  #### MUDANDO O DATATYPE DOS CAMPOS IDENTIFICADOS DE STRING PARA MAP(JSON) ####
   def campos_json(self):
     try:
       print('Iniciando ... campos_json')
@@ -151,6 +152,7 @@ class GoldIngestion:
     except Exception as error:
       raise ValueError(f"{error}")
 
+  #### FAZENDO A SEPARAÃO DOS CAMPOS QUE ESTÃO ANINHADOS EM UM CAMPO JSON, PARA CAMPOS INDIVIDUAIS ####
   def newColumns(self):
     ### Faz a separação de todos os campos dentro da do campo Json identificado  ###
     from pyspark.sql.functions import col
@@ -160,7 +162,7 @@ class GoldIngestion:
       all_new_columns = []
       for column in df.dtypes:
         if column[1].startswith('map'):
-          print(column[0],column[1])
+          print(column[0],column[1],'\n')
           max_columns = df.select(max(map_keys(column[0])) ).collect()[0][0]
           all_new_columns.extend([col(f'{column[0]}.'+ cols).alias(f'{cols}') for cols in max_columns])
 
@@ -170,12 +172,14 @@ class GoldIngestion:
     except Exception as error:
       raise ValueError(f"{error}")
 
+  #### SELECIONANDO OS CAMPOS PARA GRAVAÇAO DA TABELA DELTA. E ADICIONANDO OS CAMPOS QUE ESTAVAM COMO JSON PARA CAMPOS ÚNICOS E INDIVIDUAIS(all_new_columns) ####
   def transform_gold(self):
      all_new_columns,df = self.newColumns()
 
      df_final = (df.withColumn('dt',lit(f"{self.dt}"))
                    .withColumn('dateIngestion',current_timestamp())
-                   .select('id'
+                   .select( 'referenceMonthDate'
+                            ,'id'
                             ,'newsHighlight'
                             ,'editorials'
                             ,'images'
@@ -195,7 +199,7 @@ class GoldIngestion:
 
      print('Inicio gravação tabela delta...\n')
      (DeltaTable.forPath(spark, self.gold_delta_path).alias("old")
-       .merge(df_final.alias("new"),"old.id = new.id")
+       .merge(df_final.alias("new"),"old.id = new.id and old.dt = new.dt")
        .whenMatchedUpdateAll()
        .whenNotMatchedInsertAll()
        .execute()
@@ -205,9 +209,9 @@ class GoldIngestion:
   
   def save_gold(self):
     self.create_structured_delta_schema()
-    return self.transform_gold()
-  
-  # Pequenos Ajustes Try exeception no ultimo metodo
+    self.transform_gold()
 
 
-
+##########################################
+gold_class = GoldIngestion(source_delta_table,gold_delta_table,gold_delta_path,DT_START,DT_END)
+gold_class.save_gold()
