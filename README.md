@@ -17,4 +17,6 @@ ETAPAS:
      Na camada Silver, criamos a estrutura da tabela Delta, iniciamos o processo de limpeza e deduplicação, e aplicamos filtros por data. Por fim, particionamos e realizamos a escrita da tabela utilizando MERGE (upsert) para inserir e atualizar os dados de forma eficiente.
      
  4 - (GOLD)   
+     Na camada Gold, como não havia outras tabelas para realizar junções e agregações, foi feita apenas a separação de campos que estavam aninhados em um único campo JSON em vários novos campos individuais. Por fim, a tabela resultante foi salva no formato Delta, já atualizada.
+
        
