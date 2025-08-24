@@ -35,8 +35,8 @@ for itens in volumes_worspace:
 
 # COMMAND ----------
 
-df = spark.read.format('csv').option("header",True).load('dbfs:/databricks-datasets/flights/departuredelays.csv')
-df.write.mode("overwrite").format('delta').save('/Volumes/workspace/default/teste100')
+# df = spark.read.format('csv').option("header",True).load('dbfs:/databricks-datasets/flights/departuredelays.csv')
+# df.write.mode("overwrite").format('delta').save('/Volumes/workspace/default/teste100')
 
 # COMMAND ----------
 
@@ -64,6 +64,19 @@ spark.sql(""" CREATE TABLE IF NOT EXISTS  databricks_proj.bronze.teste2000
 # MAGIC select origin,sum(distance) 
 # MAGIC  from databricks_proj.bronze.teste2000
 # MAGIC  group by all
+
+# COMMAND ----------
+
+df = spark.read.format('csv').option("header",True).load('/FileStore/tables/departuredelays.csv')
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC CREATE VOLUME IF NOT EXISTS workspace.default.FireData
+
+# COMMAND ----------
+
+df.write.mode("overwrite").format('delta').save('/Volumes/workspace/default/firedata')
 
 # COMMAND ----------
 
