@@ -27,11 +27,16 @@ for db in databases:
 
 # COMMAND ----------
 
-volumes_worspace = ["raw_json","bronze","silver","gold"]
+volumes_worspace = ["raw_json","bronze","silver","gold","historic"]
 for itens in volumes_worspace:
   spark.sql(f""" CREATE VOLUME IF NOT EXISTS workspace.default.{itens} """)
   print(f"Volume d workspace.default.{itens} created")
 
+
+# COMMAND ----------
+
+# %sql
+# DROP VOLUME workspace.default.silver
 
 # COMMAND ----------
 
