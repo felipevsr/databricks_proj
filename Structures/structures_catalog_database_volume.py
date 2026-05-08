@@ -27,7 +27,7 @@ for db in databases:
 
 # COMMAND ----------
 
-volumes_worspace = ["raw_json","bronze","silver","gold","historic"]
+volumes_worspace = ["raw_json","bronze","silver","gold","historic","data_range"]
 for itens in volumes_worspace:
   spark.sql(f""" CREATE VOLUME IF NOT EXISTS workspace.default.{itens} """)
   print(f"Volume d workspace.default.{itens} created")
